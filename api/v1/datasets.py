@@ -2,12 +2,12 @@ import aiohttp
 
 from typing import Any, List
 from aiohttp import ClientSession
-from fastapi import status, APIRouter, Depends, HTTPException, Response
+from fastapi import status, APIRouter, Body, Depends, HTTPException, Response
 
 from api import deps
 from api.v1 import queries
 from core.config import settings
-from schemas import Datasets, DatasetEnvelope
+from schemas import AddTag, Datasets, DatasetEnvelope
 
 QUERY_VALUES: str = """
     urn
@@ -114,47 +114,69 @@ async def by_id(
     return DatasetEnvelope.from_json(data["data"]["dataset"])
 
 
-@router.post("/{urn}/tags", status_code=status.HTTP_201_CREATED)
+@router.post("/{ds_id}/tags")
 async def add_tag(
-    session: ClientSession = Depends(deps.get_session),
-    urn: str = None
-) -> Any:
-    """
-    Retrieve a dataset by id
-    """
-    body = {
-        "query": QUERY_BY_ID,
-        "variables": { "urn": urn },
-    }
-    resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
-    if resp.status < 200 or resp.status > 299:
-        text = await resp.text()
-        raise HTTPException(status=resp.status, detail=text)
-
-    data = await resp.json()
-    return DatasetEnvelope.from_json(data["data"]["dataset"])
-
-
-@router.delete("/{urn}/tags/{tag_id}")
-async def remove_tag(
-    urn: str,
-    tag_id: str,
+    ds_id: str,
+    tag: AddTag,
     response: Response,
     session: ClientSession = Depends(deps.get_session),
 ) -> Any:
     """
     Retrieve a dataset by id
     """
+    if tag is None:
+        raise HTTPException(status=status.HTTP_400_BAD_REQUEST, details="Missing tag")
+
     body = {
-        "query": QUERY_REMOVE_TAG,
-        "variables": { "tagUrn": tag_id, "resourceUrn": urn },
+        "query": QUERY_ADD_TAG,
+        "variables": {
+            "input": { "tagUrn": tag.tag, "resourceUrn": ds_id }
+        },
     }
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
     if resp.status == status.HTTP_200_OK:
         result = await resp.json()
         if "data" in result:
             if result["data"]["success"]:
-                response.status = status.HTTP_
+                response.status = status.HTTP_204_NO_CONTENT
+            else:
+                response.status = status.HTTP_422_UNPROCESSABLE_ENTITY
+        else:
+            response.status = status.HTTP_422_UNPROCESSABLE_ENTITY
+    else:
+        text = await resp.text()
+        response.status = resp.status
+        raise HTTPException(status=resp.status, detail=text)
+
+
+@router.delete("/{ds_id}/tags/{tag_id}")
+async def remove_tag(
+    ds_id: str,
+    tag_id: str,
+    response: Response,
+    session: ClientSession = Depends(deps.get_session),
+) -> Any:
+    """
+    Remove a tag from a dataset
+    """
+    body = {
+        "query": QUERY_REMOVE_TAG,
+        "variables": {
+            "input": { "tagUrn": tag_id, "resourceUrn": ds_id }
+        },
+    }
+    resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
+    print(f"RESP: {resp}")
+    if resp.status == status.HTTP_200_OK:
+        result = await resp.json()
+        print(f"BODY: {result}")
+        if "data" in result:
+            if result["data"]["success"]:
+                response.status = status.HTTP_204_NO_CONTENT
+            else:
+                response.status = status.HTTP_422_UNPROCESSABLE_ENTITY
+        else:
+            response.status = status.HTTP_422_UNPROCESSABLE_ENTITY
     else:
         text = await resp.text()
         response.status = resp.status
