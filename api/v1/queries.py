@@ -1,3 +1,6 @@
+import json
+from typing import Optional
+
 
 def by_id(type: str, values: str) -> str:
     return f"""
@@ -39,3 +42,36 @@ def remove_tag() -> str:
             success: removeTag(input: $input)
         }
     """
+
+def create_tag(name: str, description: Optional[str]) -> dict[str, str]:
+    return {
+        "entity": {
+            "value": {
+                "com.linkedin.metadata.snapshot.TagSnapshot": {
+                    "urn": f"urn:li:tag:{name}",
+                    "aspects": [{
+                        "com.linkedin.tag.TagProperties": {
+                            "name": name,
+                            "description": description
+                        }
+                    }]
+                }
+            }
+        }
+    }
+
+def delete_tag(urn: str) -> dict[str, str]:
+    return {
+        "entity": {
+            "value": {
+                "com.linkedin.metadata.snapshot.TagSnapshot": {
+                    "urn": urn,
+                    "aspects": [{
+                        "com.linkedin.common.Status": {
+                            "removed": True
+                        }
+                    }]
+                }
+            }
+        }
+    }

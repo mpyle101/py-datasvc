@@ -124,9 +124,6 @@ async def add_tag(
     """
     Retrieve a dataset by id
     """
-    if tag is None:
-        raise HTTPException(status=status.HTTP_400_BAD_REQUEST, details="Missing tag")
-
     body = {
         "query": QUERY_ADD_TAG,
         "variables": {

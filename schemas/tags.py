@@ -1,5 +1,6 @@
+import json
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from schemas.paging import Paging
 
