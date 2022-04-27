@@ -2,6 +2,8 @@
 Restful frontend to Datahub
   
 <pre>
+Base URL prefix => /api/v1
+
 GET /tags                    => all tags (paged)
 GET /tags?query=blah         => tags with any value like "blah" (paged)  
 GET /tags?name=blah          => tags with names like "blah" up to limit (default:10)  
