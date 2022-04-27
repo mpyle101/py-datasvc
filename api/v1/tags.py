@@ -64,9 +64,9 @@ async def by_query(
     return Tags.from_json(data["data"]["results"])
 
 
-@router.get("/{tag_id}", response_model=TagEnvelope)
+@router.get("/{tid}", response_model=TagEnvelope)
 async def by_id(
-    tag_id: str,
+    tid: str,
     session: ClientSession = Depends(deps.get_session),
 ) -> Any:
     """
@@ -74,7 +74,7 @@ async def by_id(
     """
     body = {
         "query": QUERY_BY_ID,
-        "variables": { "urn": tag_id },
+        "variables": { "urn": tid },
     }
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
     if resp.status < 200 or resp.status > 299:
@@ -85,9 +85,9 @@ async def by_id(
     return TagEnvelope.from_json(data["data"]["tag"])
 
 
-@router.get("/{tag_id}/datasets", response_model=Datasets)
+@router.get("/{tid}/datasets", response_model=Datasets)
 async def datasets_by_tag(
-    tag_id: str,
+    tid: str,
     limit: int = 10,
     offset: int = 0,
     session: ClientSession = Depends(deps.get_session),
@@ -102,7 +102,7 @@ async def datasets_by_tag(
         "count": limit,
         "filters": {
             "field": "tags",
-            "value": tag_id
+            "value": tid
         }
     }
     body = {
@@ -143,16 +143,16 @@ async def create_tag(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, detail=text)
 
 
-@router.delete("/{tag_id}")
+@router.delete("/{tid}")
 async def delete_tag(
-    tag_id: str,
+    tid: str,
     response: Response,
     session: ClientSession = Depends(deps.get_session),
 ) -> Any:
     """
     Delete a specified tag
     """
-    body = queries.delete_tag(tag_id)
+    body = queries.delete_tag(tid)
     resp = await session.post(settings.DATAHUB_INGEST, json=body)
     if resp.status == status.HTTP_200_OK:
         response.status = status.HTTP_204_NO_CONTENT

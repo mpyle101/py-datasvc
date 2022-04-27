@@ -93,17 +93,17 @@ async def by_query(
     return Datasets.from_json(data["data"]["results"])
 
 
-@router.get("/{urn}", response_model=DatasetEnvelope)
+@router.get("/{dsid}", response_model=DatasetEnvelope)
 async def by_id(
     session: ClientSession = Depends(deps.get_session),
-    urn: str = None
+    dsid: str = None
 ) -> Any:
     """
     Retrieve a dataset by id
     """
     body = {
         "query": QUERY_BY_ID,
-        "variables": { "urn": urn },
+        "variables": { "urn": dsid },
     }
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
     if resp.status < 200 or resp.status > 299:
@@ -114,20 +114,20 @@ async def by_id(
     return DatasetEnvelope.from_json(data["data"]["dataset"])
 
 
-@router.post("/{ds_id}/tags")
+@router.post("/{dsid}/tags")
 async def add_tag(
-    ds_id: str,
+    dsid: str,
     tag: AddTag,
     response: Response,
     session: ClientSession = Depends(deps.get_session),
 ) -> Any:
     """
-    Retrieve a dataset by id
+    Add a tag to a dataset
     """
     body = {
         "query": QUERY_ADD_TAG,
         "variables": {
-            "input": { "tagUrn": tag.tag, "resourceUrn": ds_id }
+            "input": { "tagUrn": tag.tag, "resourceUrn": dsid }
         },
     }
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
@@ -146,9 +146,9 @@ async def add_tag(
         raise HTTPException(status=resp.status, detail=text)
 
 
-@router.delete("/{ds_id}/tags/{tag_id}")
+@router.delete("/{dsid}/tags/{tag_id}")
 async def remove_tag(
-    ds_id: str,
+    dsid: str,
     tag_id: str,
     response: Response,
     session: ClientSession = Depends(deps.get_session),
@@ -159,7 +159,7 @@ async def remove_tag(
     body = {
         "query": QUERY_REMOVE_TAG,
         "variables": {
-            "input": { "tagUrn": tag_id, "resourceUrn": ds_id }
+            "input": { "tagUrn": tag_id, "resourceUrn": dsid }
         },
     }
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)

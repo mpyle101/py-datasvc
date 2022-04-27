@@ -29,6 +29,18 @@ def by_query(values: str) -> str:
         }}
     """
 
+def platforms(values: str) -> str:
+    return f"""
+        query platforms($input: ListRecommendationsInput!) {{
+            results: listRecommendations(input: $input) {{
+                modules {{
+                    id: moduleId
+                    content {{ entity {{ {values} }} }}
+                }}
+            }}
+        }}
+    """
+
 def add_tag() -> str:
     return """
         mutation add_tag($input: TagAssociationInput!) {
