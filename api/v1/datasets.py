@@ -60,11 +60,12 @@ router = APIRouter()
 
 @router.get("", response_model=Datasets)
 async def by_query(
-    session: ClientSession = Depends(deps.get_session),
+    tags: str = None,
     name: str = None,
     query: str = None,
     limit: int = 10,
-    offset: int = 0
+    offset: int = 0,
+    session: ClientSession = Depends(deps.get_session),
 ) -> Any:
     """
     Retrieve datasets by query parameter
@@ -75,6 +76,9 @@ async def by_query(
     elif name is not None:
         operation = QUERY_BY_NAME
         input = {"type": "DATASET", "query": name, "limit": limit}
+    elif tags is not None:
+        operation = QUERY_BY_QUERY
+        input = {"type": "DATASET", "query": f"tags:{query}", "start": offset, "count": limit}
     else:
         # Get all datasets
         operation = QUERY_BY_QUERY
