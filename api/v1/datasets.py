@@ -78,7 +78,7 @@ async def by_query(
         input = {"type": "DATASET", "query": name, "limit": limit}
     elif tags is not None:
         operation = QUERY_BY_QUERY
-        input = {"type": "DATASET", "query": f"tags:{query}", "start": offset, "count": limit}
+        input = {"type": "DATASET", "query": f"tags:{tags}", "start": offset, "count": limit}
     else:
         # Get all datasets
         operation = QUERY_BY_QUERY

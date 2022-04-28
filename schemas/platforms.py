@@ -15,13 +15,14 @@ class PlatformEnvelope(BaseModel):
 
     @staticmethod
     def from_json(e):
+        print(e)
         props = e["properties"]
         return PlatformEnvelope(
             platform = Platform(
                 id=e["urn"],
                 name=e["name"],
                 type=props["type"],
-                title=props["title"]
+                title=props["name"]
             )
         )
 
@@ -32,7 +33,7 @@ class Platforms(BaseModel):
 
     @staticmethod
     def from_json(modules):
-        platforms = [m for m in modules if m["moduleId"] == "Platforms"][0]
-        data = [PlatformEnvelope.from_json(e) for e in platforms]
+        platforms = [m for m in modules if m["id"] == "Platforms"][0]
+        data = [PlatformEnvelope.from_json(e["entity"]) for e in platforms["content"]]
 
         return Platforms(data=data, paging=None)

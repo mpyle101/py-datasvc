@@ -16,8 +16,8 @@ QUERY_VALUES: str = """
     ... on DataPlatform {
         name
         properties {
+            type
             name: displayName
-            class: type
         }
     }
 """
@@ -77,7 +77,7 @@ async def by_id(
         raise HTTPException(status=resp.status, detail=text)
 
     data = await resp.json()
-    return PlatformEnvelope.from_json(data["data"]["platform"])
+    return PlatformEnvelope.from_json(data["data"]["dataPlatform"])
 
 
 @router.get("/{pid}/datasets", response_model=Datasets)
