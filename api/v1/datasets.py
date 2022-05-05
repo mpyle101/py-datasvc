@@ -2,10 +2,13 @@ import aiohttp
 
 from typing import Any, List
 from aiohttp import ClientSession
-from fastapi import status, APIRouter, Body, Depends, HTTPException, Response
+from fastapi import (
+    status, APIRouter, Depends, HTTPException, Request, Response
+)
 
 from api import deps
-from api.v1 import queries
+from api.v1 import graphql
+from api.v1.params import QueryType, QueryParams
 from core.config import settings
 from schemas import AddTag, Datasets, DatasetEnvelope
 
@@ -50,44 +53,33 @@ QUERY_VALUES: str = """
     }
 """
 
-QUERY_BY_ID: str      = queries.by_id("dataset", QUERY_VALUES)
-QUERY_BY_NAME: str    = queries.by_name(QUERY_VALUES)
-QUERY_BY_QUERY: str   = queries.by_query(QUERY_VALUES)
-QUERY_ADD_TAG: str    = queries.add_tag()
-QUERY_REMOVE_TAG: str = queries.remove_tag()
+ADD_TAG      = graphql.AddTagFactory()
+REMOVE_TAG   = graphql.RemoveTagFactory()
+GET_ALL      = graphql.GetAllFactory(QUERY_VALUES)
+GET_BY_ID    = graphql.GetOneFactory("dataset", QUERY_VALUES)
+GET_BY_NAME  = graphql.NameFactory(QUERY_VALUES)
+GET_BY_TAGS  = graphql.TagsFactory(QUERY_VALUES)
+GET_BY_QUERY = graphql.QueryFactory(QUERY_VALUES)
+
+OPERATIONS = {
+    QueryType.ALL:   GET_ALL,
+    QueryType.NAME:  GET_BY_NAME,
+    QueryType.TAGS:  GET_BY_TAGS,
+    QueryType.QUERY: GET_BY_QUERY
+}
 
 router = APIRouter()
 
 @router.get("", response_model=Datasets)
 async def by_query(
-    tags: str = None,
-    name: str = None,
-    query: str = None,
-    limit: int = 10,
-    offset: int = 0,
+    req: Request,
     session: ClientSession = Depends(deps.get_session),
 ) -> Any:
     """
     Retrieve datasets by query parameter
     """
-    if query is not None:
-        operation = QUERY_BY_QUERY
-        input = {"type": "DATASET", "query": f"*{query}*", "start": offset, "count": limit}
-    elif name is not None:
-        operation = QUERY_BY_NAME
-        input = {"type": "DATASET", "query": name, "limit": limit}
-    elif tags is not None:
-        operation = QUERY_BY_QUERY
-        input = {"type": "DATASET", "query": f"tags:{tags}", "start": offset, "count": limit}
-    else:
-        # Get all datasets
-        operation = QUERY_BY_QUERY
-        input = {"type": "DATASET", "query": "*", "start": offset, "count": limit}
-    
-    body = {
-        "query": operation,
-        "variables": { "input": input },
-    }
+    params = QueryParams(req)
+    body = OPERATIONS[params.type].body(params)
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
     if resp.status < 200 or resp.status > 299:
         text = await resp.text()
@@ -97,18 +89,15 @@ async def by_query(
     return Datasets.from_json(data["data"]["results"])
 
 
-@router.get("/{dsid}", response_model=DatasetEnvelope)
+@router.get("/{dataset_id}", response_model=DatasetEnvelope)
 async def by_id(
+    dataset_id: str,
     session: ClientSession = Depends(deps.get_session),
-    dsid: str = None
 ) -> Any:
     """
     Retrieve a dataset by id
     """
-    body = {
-        "query": QUERY_BY_ID,
-        "variables": { "urn": dsid },
-    }
+    body = GET_BY_ID.body(dataset_id)
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
     if resp.status < 200 or resp.status > 299:
         text = await resp.text()
@@ -118,22 +107,17 @@ async def by_id(
     return DatasetEnvelope.from_json(data["data"]["dataset"])
 
 
-@router.post("/{dsid}/tags")
+@router.post("/{dataset_id}/tags")
 async def add_tag(
-    dsid: str,
-    tag: AddTag,
+    dataset_id: str,
+    payload: AddTag,
     response: Response,
     session: ClientSession = Depends(deps.get_session),
 ) -> Any:
     """
     Add a tag to a dataset
     """
-    body = {
-        "query": QUERY_ADD_TAG,
-        "variables": {
-            "input": { "tagUrn": tag.tag, "resourceUrn": dsid }
-        },
-    }
+    body = ADD_TAG.body(payload.tag, dataset_id)
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
     if resp.status == status.HTTP_200_OK:
         result = await resp.json()
@@ -150,9 +134,9 @@ async def add_tag(
         raise HTTPException(status=resp.status, detail=text)
 
 
-@router.delete("/{dsid}/tags/{tag_id}")
+@router.delete("/{dataset_id}/tags/{tag_id}")
 async def remove_tag(
-    dsid: str,
+    dataset_id: str,
     tag_id: str,
     response: Response,
     session: ClientSession = Depends(deps.get_session),
@@ -160,17 +144,10 @@ async def remove_tag(
     """
     Remove a tag from a dataset
     """
-    body = {
-        "query": QUERY_REMOVE_TAG,
-        "variables": {
-            "input": { "tagUrn": tag_id, "resourceUrn": dsid }
-        },
-    }
+    body = REMOVE_TAG.body(tag_id, dataset_id)
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
-    print(f"RESP: {resp}")
     if resp.status == status.HTTP_200_OK:
         result = await resp.json()
-        print(f"BODY: {result}")
         if "data" in result:
             if result["data"]["success"]:
                 response.status = status.HTTP_204_NO_CONTENT

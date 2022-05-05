@@ -2,11 +2,12 @@ import aiohttp
 
 from typing import Any, List
 from aiohttp import ClientSession
-from fastapi import status, APIRouter, Body, Depends, HTTPException, Response
+from fastapi import status, APIRouter, Depends, HTTPException, Request, Response
 
 from api import deps
-from api.v1 import queries
+from api.v1 import graphql
 from api.v1.datasets import QUERY_VALUES as DATASET_VALUES
+from api.v1.params import QueryParams
 from core.config import settings
 from schemas import AddTag, Datasets, Platforms, PlatformEnvelope
 
@@ -22,34 +23,22 @@ QUERY_VALUES: str = """
     }
 """
 
-QUERY_BY_ID: str     = queries.by_id("dataPlatform", QUERY_VALUES)
-QUERY_BY_NAME: str   = queries.by_name(QUERY_VALUES)
-QUERY_PLATFORMS: str = queries.platforms(QUERY_VALUES)
-DATASETS_BY_PLATFORM: str = queries.by_query(DATASET_VALUES)
+GET_ALL   = graphql.PlatformsFactory(QUERY_VALUES)
+GET_BY_ID = graphql.GetOneFactory("tag", QUERY_VALUES)
+DATASETS_BY_PLATFORM = graphql.FilterFactory("platorm", "DATASET", DATASET_VALUES)
 
 router = APIRouter()
 
 @router.get("", response_model=Platforms)
 async def by_query(
-    limit: int = 10,
+    req: Request,
     session: ClientSession = Depends(deps.get_session),
 ) -> Any:
     """
     Retrieve all platforms
-    """    
-    body = {
-        "query": QUERY_PLATFORMS,
-        "variables": { 
-            "input": {
-                "userUrn": "urn:li:corpuser:datahub",
-                "limit": limit,
-                "requestContext": {
-                    "scenario": "HOME"
-                }
-            }
-        }
-    }
-
+    """
+    params = QueryParams(req)
+    body = GET_ALL.body(params)
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
     if resp.status < 200 or resp.status > 299:
         text = await resp.text()
@@ -59,18 +48,15 @@ async def by_query(
     return Platforms.from_json(data["data"]["results"]["modules"])
 
 
-@router.get("/{urn}", response_model=PlatformEnvelope)
+@router.get("/{platform_id}", response_model=PlatformEnvelope)
 async def by_id(
+    platform_id: str,
     session: ClientSession = Depends(deps.get_session),
-    urn: str = None
 ) -> Any:
     """
     Retrieve a platform by id
     """
-    body = {
-        "query": QUERY_BY_ID,
-        "variables": { "urn": urn },
-    }
+    body = GET_BY_ID.body(platform_id)
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
     if resp.status < 200 or resp.status > 299:
         text = await resp.text()
@@ -80,30 +66,17 @@ async def by_id(
     return PlatformEnvelope.from_json(data["data"]["dataPlatform"])
 
 
-@router.get("/{pid}/datasets", response_model=Datasets)
+@router.get("/{platform_id}/datasets", response_model=Datasets)
 async def datasets_by_platform(
-    pid: str,
-    limit: int = 10,
-    offset: int = 0,
+    platform_id: str,
+    req: Request,
     session: ClientSession = Depends(deps.get_session),
 ) -> Any:
     """
     Retrieve datasets for the platform
     """
-    input = {
-        "type": "DATASET",
-        "query": "*",
-        "start": offset,
-        "count": limit,
-        "filters": {
-            "field": "platform",
-            "value": pid
-        }
-    }
-    body = {
-        "query": DATASETS_BY_PLATFORM,
-        "variables": { "input": input },
-    }
+    params = QueryParams(req)
+    body = DATASETS_BY_PLATFORM.body(platform_id, params)
     resp = await session.post(settings.DATAHUB_GRAPHQL, json=body)
     if resp.status < 200 or resp.status > 299:
         text = await resp.text()
