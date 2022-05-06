@@ -4,12 +4,12 @@ from typing import Any, List
 from aiohttp import ClientSession
 from fastapi import status, APIRouter, Depends, HTTPException, Request, Response
 
-from api import deps
-from api.v1 import graphql
-from api.v1.datasets import QUERY_VALUES as DATASET_VALUES
-from api.v1.params import QueryParams
-from core.config import settings
-from schemas import AddTag, Datasets, Platforms, PlatformEnvelope
+from .datasets import QUERY_VALUES as DATASET_VALUES
+from .params import QueryParams
+from . import graphql
+from .. import deps
+from ...core.config import settings
+from ...schemas import AddTag, Datasets, Platforms, PlatformEnvelope
 
 QUERY_VALUES: str = """
     urn

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel
 
-from schemas.paging import Paging
+from .paging import Paging
 
 class Platform(BaseModel):
     id: str

@@ -2,7 +2,7 @@ import aiohttp
 
 from typing import Optional
 
-from core.config import settings
+from .config import settings
 
 class Client:
     session: Optional[aiohttp.ClientSession] = None

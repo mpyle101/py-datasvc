@@ -2,7 +2,7 @@ import json
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
-from schemas.paging import Paging
+from .paging import Paging
 
 class Tag(BaseModel):
     id: str

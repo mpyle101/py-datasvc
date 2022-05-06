@@ -6,11 +6,11 @@ from fastapi import (
     status, APIRouter, Depends, HTTPException, Request, Response
 )
 
-from api import deps
-from api.v1 import graphql
-from api.v1.params import QueryType, QueryParams
-from core.config import settings
-from schemas import AddTag, Datasets, DatasetEnvelope
+from .. import deps
+from . import graphql
+from .params import QueryType, QueryParams
+from ...core.config import settings
+from ...schemas import AddTag, Datasets, DatasetEnvelope
 
 QUERY_VALUES: str = """
     urn

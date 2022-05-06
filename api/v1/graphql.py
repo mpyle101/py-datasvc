@@ -1,6 +1,7 @@
 from typing import Mapping
-from api.v1 import queries
-from api.v1.params import QueryParams
+
+from . import queries
+from .params import QueryParams
 
 class AddTagFactory:
     def __init__(self):

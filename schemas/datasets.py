@@ -1,8 +1,8 @@
 from typing import List, Optional
 from pydantic import BaseModel
 
-from schemas.tags import TagEnvelope
-from schemas.paging import Paging
+from .paging import Paging
+from .tags import TagEnvelope
 
 class Field(BaseModel):
     path: str

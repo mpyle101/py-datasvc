@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-from api.v1 import datasets
-from api.v1 import platforms
-from api.v1 import tags
+from . import datasets
+from . import platforms
+from . import tags
 
 api_router = APIRouter()
 api_router.include_router(datasets.router, prefix="/datasets", tags=["datasets"])
