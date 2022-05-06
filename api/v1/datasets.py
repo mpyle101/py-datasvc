@@ -55,11 +55,11 @@ QUERY_VALUES: str = """
 
 ADD_TAG      = graphql.AddTagFactory()
 REMOVE_TAG   = graphql.RemoveTagFactory()
-GET_ALL      = graphql.GetAllFactory(QUERY_VALUES)
+GET_ALL      = graphql.GetAllFactory("DATASET", QUERY_VALUES)
 GET_BY_ID    = graphql.GetOneFactory("dataset", QUERY_VALUES)
-GET_BY_NAME  = graphql.NameFactory(QUERY_VALUES)
-GET_BY_TAGS  = graphql.TagsFactory(QUERY_VALUES)
-GET_BY_QUERY = graphql.QueryFactory(QUERY_VALUES)
+GET_BY_NAME  = graphql.NameFactory("DATASET", QUERY_VALUES)
+GET_BY_TAGS  = graphql.TagsFactory("DATASET", QUERY_VALUES)
+GET_BY_QUERY = graphql.QueryFactory("DATASET", QUERY_VALUES)
 
 OPERATIONS = {
     QueryType.ALL:   GET_ALL,

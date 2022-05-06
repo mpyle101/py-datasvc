@@ -3,7 +3,7 @@ from api.v1 import queries
 from api.v1.params import QueryParams
 
 class AddTagFactory:
-    def __init__(self, type: str, values: str):
+    def __init__(self):
         self.query = queries.add_tag()
 
     def body(self, tag: str, rsrc: str) -> Mapping:
@@ -16,7 +16,7 @@ class AddTagFactory:
 
 
 class RemoveTagFactory:
-    def __init__(self, type: str, values: str):
+    def __init__(self):
         self.query = queries.remove_tag()
 
     def body(self, tag: str, rsrc: str) -> Mapping:

@@ -23,10 +23,10 @@ QUERY_VALUES: str = """
     }
 """
 
-GET_ALL         = graphql.GetAllFactory(QUERY_VALUES)
+GET_ALL         = graphql.GetAllFactory("TAGS", QUERY_VALUES)
 GET_BY_ID       = graphql.GetOneFactory("tag", QUERY_VALUES)
-GET_BY_NAME     = graphql.NameFactory(QUERY_VALUES)
-GET_BY_QUERY    = graphql.QueryFactory(QUERY_VALUES)
+GET_BY_NAME     = graphql.NameFactory("TAGS", QUERY_VALUES)
+GET_BY_QUERY    = graphql.QueryFactory("TAGS", QUERY_VALUES)
 DATASETS_BY_TAG = graphql.FilterFactory("tags", "DATASET", DATASET_VALUES)
 
 OPERATIONS = {
