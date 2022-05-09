@@ -3,7 +3,7 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
     HOST: str = "localhost"
-    PORT: int = 3000
+    PORT: int = 80
     API_V1_PREFIX: str   = "/api/v1"
     PROJECT_NAME: str    = "Alteryx Data Catalog"
     DATAHUB_INGEST: str  = "http://localhost:8080/entities?action=ingest"
