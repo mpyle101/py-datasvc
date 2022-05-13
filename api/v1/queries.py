@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from typing import Mapping, Optional
 
 
 def by_id(type: str, values: str) -> str:
@@ -55,7 +55,7 @@ def remove_tag() -> str:
         }
     """
 
-def create_tag(name: str, description: Optional[str]) -> dict[str, str]:
+def create_tag(name: str, description: Optional[str]) -> Mapping[str, str]:
     return {
         "entity": {
             "value": {
@@ -72,7 +72,7 @@ def create_tag(name: str, description: Optional[str]) -> dict[str, str]:
         }
     }
 
-def delete_tag(urn: str) -> dict[str, str]:
+def delete_tag(urn: str) -> Mapping[str, str]:
     return {
         "entity": {
             "value": {
